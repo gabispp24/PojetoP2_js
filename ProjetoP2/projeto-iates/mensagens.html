@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Mensagens</title>
+<link rel="stylesheet" href="css/default.css">
+</head>
+<body>
+
+<div class="page">
+  <h2>Mensagens Recebidas</h2>
+
+  <table border="1" width="100%">
+      <thead>
+          <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Mensagem</th>
+              <th>Ações</th>
+          </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+  </table>
+</div>
+
+<script src="js/jquery-3.6.4.min.js"></script>
+<script src="js/api.js"></script>
+<script>
+function carregarMensagens() {
+    // Pega mensagens da API
+    var mensagensAPI = obterMensagens();
+    
+    // Pega status local de visualizadas/excluídas
+    var local = JSON.parse(localStorage.getItem("mensagensLocais") || "{}");
+
+    var html = "";
+    mensagensAPI.forEach(function(m, i){
+        // Checa se a mensagem foi excluída localmente
+        if(local[m.id] && local[m.id].excluida) return;
+
+        var visualizada = local[m.id] ? local[m.id].visualizada : false;
+        var estilo = visualizada ? "" : "font-weight:bold;";
+
+        html += `
+            <tr style="${estilo}">
+                <td>${m.nome}</td>
+                <td>${m.email}</td>
+                <td>${m.mensagem}</td>
+                <td>
+                    <button onclick="marcar('${m.id}')">Mensagem Visualizada</button>
+                    <button onclick="excluir('${m.id}')">Excluir Mensagem</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    $("#lista").html(html);
+}
+
+function salvarLocal(mensagens){
+    localStorage.setItem("mensagensLocais", JSON.stringify(mensagens));
+}
+
+function marcar(id){
+    if(confirm("Marcar esta mensagem como visualizada?")){
+        var local = JSON.parse(localStorage.getItem("mensagensLocais") || "{}");
+        if(!local[id]) local[id] = {};
+        local[id].visualizada = true;
+        salvarLocal(local);
+        carregarMensagens();
+    }
+}
+
+function excluir(id){
+    if(confirm("Deseja realmente excluir esta mensagem?")){
+        var local = JSON.parse(localStorage.getItem("mensagensLocais") || "{}");
+        if(!local[id]) local[id] = {};
+        local[id].excluida = true;
+        salvarLocal(local);
+        carregarMensagens();
+    }
+}
+
+$(document).ready(function(){
+    carregarMensagens();
+});
+</script>
+
+</body>
+</html>
